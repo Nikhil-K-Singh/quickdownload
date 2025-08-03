@@ -4,16 +4,16 @@ A high-performance parallel file downloader that supports both HTTP/HTTPS downlo
 
 ## Features
 
-- 🚀 **Parallel Downloads**: Split HTTP files into multiple chunks and download them simultaneously
-- 🧲 **BitTorrent Support**: Download from magnet links, .torrent files, and .torrent URLs
-- 📡 **Resume Support**: Automatically resume interrupted downloads from where they left off
-- 💾 **Progress Tracking**: Persistent progress tracking survives network failures and interruptions
-- 🎯 **Configurable Parallelism**: Control the number of parallel download threads (HTTP only)
-- 📁 **Custom Output**: Specify custom output file names and locations
-- 🔧 **Command Line Interface**: Simple and intuitive CLI for both HTTP and torrent downloads
-- ⚡ **High Performance**: Significantly faster downloads for large files
-- 🔄 **Automatic Retry**: Failed chunks are automatically retried with exponential backoff
-- 🌱 **Seeding Support**: Optional seeding for torrent downloads to contribute back to the network
+- **Parallel Downloads**: Split HTTP files into multiple chunks and download them simultaneously
+- **BitTorrent Support**: Download from magnet links, .torrent files, and .torrent URLs
+- **Resume Support**: Automatically resume interrupted downloads from where they left off
+- **Progress Tracking**: Persistent progress tracking survives network failures and interruptions
+- **Configurable Parallelism**: Control the number of parallel download threads (HTTP only)
+- **Custom Output**: Specify custom output file names and locations
+- **Command Line Interface**: Simple and intuitive CLI for both HTTP and torrent downloads
+- **High Performance**: Significantly faster downloads for large files
+- **Automatic Retry**: Failed chunks are automatically retried with exponential backoff
+- **Seeding Support**: Optional seeding for torrent downloads to contribute back to the network
 
 ## Installation
 
@@ -90,7 +90,7 @@ quickdownload --seed-time 60 "magnet:?xt=urn:btih:..."
 |--------|-------|-------------|---------|------------|
 | `--output` | `-o` | Custom output filename/directory | Current directory | Both |
 | `--parallel` | `-p` | Number of parallel download threads | 4 | HTTP only |
-| `--seed-time` | - | Time to seed after torrent download (minutes) | 0 | Torrent only |
+| `--seed-time` | `` | Time to seed after torrent download (minutes) | 0 | Torrent only |
 | `--help` | `-h` | Show help message | - | Both |
 
 ### HTTP Download Examples
@@ -215,24 +215,6 @@ quickdownload -p 8 https://example.com/1GB-file.zip
 # QuickDownload: resumes from 60% - saves 6+ minutes!
 ```
 
-## Technical Details
-
-### Architecture
-
-```
-QuickDownload/
-├── quickdownload/
-│   ├── __main__.py      # CLI entry point
-│   └── utils.py         # Core download functionality
-├── tests/
-│   ├── test_quickdownload.py  # Comprehensive test suite
-│   ├── test_resume.py          # Resume functionality tests
-│   └── demo.py                 # Feature demonstrations
-├── manual_test.py       # Interactive testing tool
-├── setup.py            # Package installation
-└── README.md
-```
-
 ### Resume Implementation Details
 
 QuickDownload implements resume functionality through:
@@ -301,41 +283,6 @@ QuickDownload includes robust error handling for:
 - Corrupted chunk detection and recovery
 - Interrupted downloads with full resume capability
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Changelog
-
-### v1.0.0 (Current)
-- ✅ Complete parallel download functionality
-- ✅ Full resume support with progress tracking
-- ✅ Chunk integrity verification and recovery
-- ✅ CLI interface with comprehensive options
-- ✅ Automatic retry with exponential backoff
-- ✅ Smart fallback for servers without range support
-- ✅ Comprehensive test suite and documentation
-- ✅ Real-time progress visualization
-- ✅ Robust error handling for all scenarios
-
-## Testing & Validation
-
-QuickDownload has been thoroughly tested with:
-
-✅ **Functional Tests**: Basic download, parallel processing, file integrity  
-✅ **Resume Tests**: Interruption handling, chunk verification, progress recovery  
-✅ **Error Tests**: Network failures, invalid URLs, server errors  
-✅ **Performance Tests**: Speed comparisons, bandwidth utilization  
-✅ **Edge Cases**: Corrupted chunks, parameter changes, cleanup scenarios
-
 ## FAQ
 
 **Q: How many parallel downloads should I use?**
@@ -371,16 +318,6 @@ A: Typically 2-5x faster than single-threaded downloads, depending on your netwo
 **Q: Is this safe to use?**
 A: Yes, QuickDownload only downloads files and doesn't execute any code. However, always be cautious about what files you download from the internet.
 
-## Support
-
-If you encounter any issues or have questions:
-- Run the test suite: `python3 test_quickdownload.py`
-- Check the interactive demo: `python3 demo.py`
-- Open an issue on GitHub with:
-  - The exact command you ran
-  - Error messages (if any)
-  - Whether you were trying to resume a download
-- Review the documentation above
 
 ### Troubleshooting
 
