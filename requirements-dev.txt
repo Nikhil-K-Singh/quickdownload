@@ -1,0 +1,19 @@
+# Include base requirements
+-r requirements.txt
+
+# Build and publish tools
+build
+twine
+
+# Testing
+pytest
+pytest-cov
+
+# Code quality
+black
+flake8
+mypy
+
+# Documentation
+sphinx
+sphinx-rtd-theme
