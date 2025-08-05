@@ -97,12 +97,12 @@ quickdownload --seed-time 60 "magnet:?xt=urn:btih:..."
 
 Download a large file with maximum parallelism:
 ```bash
-quickdownload -p 16 https://releases.ubuntu.com/22.04/ubuntu-22.04.3-desktop-amd64.iso
+quickdownload -p 32 https://releases.ubuntu.com/22.04/ubuntu-22.04.5-desktop-amd64.iso
 ```
 
 Download to a specific directory:
 ```bash
-quickdownload -o ~/Downloads/ubuntu.iso https://releases.ubuntu.com/22.04/ubuntu-22.04.3-desktop-amd64.iso
+quickdownload -o ~/Downloads/ubuntu.iso https://releases.ubuntu.com/22.04/ubuntu-22.04.5-desktop-amd64.iso
 ```
 
 ### Torrent Download Examples
@@ -110,13 +110,13 @@ quickdownload -o ~/Downloads/ubuntu.iso https://releases.ubuntu.com/22.04/ubuntu
 Download Linux distribution:
 ```bash
 # Using magnet link
-quickdownload "magnet:?xt=urn:btih:a26f24611b7db8c524c6e96b7e25000b9e2ad705"
+quickdownload "magnet:?xt=urn:btih:...."
 
 # Using .torrent file
-quickdownload ~/Downloads/ubuntu-22.04.3-desktop-amd64.iso.torrent
+quickdownload ~/Downloads/ubuntu-22.04.5-live-server-amd64.iso.torrent
 
 # Using .torrent URL
-quickdownload https://releases.ubuntu.com/22.04/ubuntu-22.04.3-desktop-amd64.iso.torrent
+quickdownload https://releases.ubuntu.com/22.04/ubuntu-22.04.5-live-server-amd64.iso.torrent
 ```
 
 Download to specific directory with seeding:
@@ -144,8 +144,7 @@ quickdownload -p 8 -o large_file.zip https://example.com/large_file.zip
 **Scenario 1: Large Software Download**
 ```bash
 # Download a large ISO file with 8 parallel connections
-quickdownload -p 8 -o ubuntu-22.04.iso \
-  https://releases.ubuntu.com/22.04/ubuntu-22.04.3-desktop-amd64.iso
+quickdownload -p 8 -o ubuntu-22.04.iso https://releases.ubuntu.com/22.04/ubuntu-22.04.5-desktop-amd64.iso
 
 # If interrupted, resume with the same command
 # Only missing chunks will be downloaded
@@ -258,7 +257,6 @@ QuickDownload implements resume functionality through:
 ⚠️ **Current Limitations:**
 - Resume only works when using same parameters (URL, output file, parallel count)
 - Servers without HTTP range support fall back to single-threaded (no resume)
-- Progress files are stored in the same directory as output file
 
 ### Supported Protocols
 

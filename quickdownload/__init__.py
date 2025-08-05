@@ -5,7 +5,7 @@ A command-line tool and Python library for downloading files with parallel conne
 and resume capabilities. Supports both HTTP/HTTPS downloads and BitTorrent downloads.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "Nikhil K Singh"
 __email__ = "nsr.nikhilsingh@gmail.com"
 

@@ -210,10 +210,15 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0):
 
             # Only update progress if it changed significantly
             if int(progress) != last_progress:
+                # Create progress bar for torrent download
+                bar_length = 30
+                filled_length = int(bar_length * progress / 100)
+                bar = "█" * filled_length + "░" * (bar_length - filled_length)
+
                 print(
-                    f"\rProgress: {progress:.1f}% | "
-                    f"Downloaded: {format_size(downloaded)}/{format_size(total_size)} | "
-                    f"Speed: ↓{download_rate:.1f} KB/s ↑{upload_rate:.1f} KB/s | "
+                    f"\r[{bar}] {progress:.1f}% | "
+                    f"{format_size(downloaded)}/{format_size(total_size)} | "
+                    f"↓{download_rate:.1f} KB/s ↑{upload_rate:.1f} KB/s | "
                     f"Peers: {num_peers} Seeds: {num_seeds} | "
                     f"ETA: {eta_str}",
                     end="",
@@ -234,15 +239,24 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0):
         if seed_time > 0:
             print(f"\nSeeding for {seed_time} minutes...")
             seed_end = time.time() + (seed_time * 60)
+            total_seed_time = seed_time * 60
 
             while time.time() < seed_end:
                 status = handle.status()
                 upload_rate = status.upload_rate / 1024
                 uploaded = status.total_upload
                 remaining_time = seed_end - time.time()
+                elapsed_time = total_seed_time - remaining_time
+
+                # Create seeding progress bar
+                seed_progress = (elapsed_time / total_seed_time) * 100
+                bar_length = 20
+                filled_length = int(bar_length * seed_progress / 100)
+                bar = "█" * filled_length + "░" * (bar_length - filled_length)
 
                 print(
-                    f"\rSeeding... Upload: {upload_rate:.1f} KB/s | "
+                    f"\rSeeding [{bar}] {seed_progress:.1f}% | "
+                    f"↑{upload_rate:.1f} KB/s | "
                     f"Uploaded: {format_size(uploaded)} | "
                     f"Time left: {format_time(remaining_time)}",
                     end="",
