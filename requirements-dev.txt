@@ -5,15 +5,5 @@
 build
 twine
 
-# Testing
-pytest
-pytest-cov
-
-# Code quality
+# Development dependencies
 black
-flake8
-mypy
-
-# Documentation
-sphinx
-sphinx-rtd-theme

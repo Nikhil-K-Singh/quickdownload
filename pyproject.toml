@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quickdownload"
-description = "High-performance parallel file downloader with resume support and torrent support"
+description = "High-performance parallel file downloader with multi-device cluster support, queue system, bandwidth throttling, and torrent support"
 readme = "README.md"
 requires-python = ">=3.7"
 license = {text = "MIT"}
@@ -12,7 +12,7 @@ dynamic = ["version"]
 authors = [
     {name = "Nikhil K Singh", email = "nsr.nikhilsingh@gmail.com"}
 ]
-keywords = ["download", "parallel", "torrent", "resume", "cli", "http", "https", "magnet"]
+keywords = ["download", "parallel", "torrent", "resume", "cli", "http", "https", "magnet", "cluster", "multi-device", "queue", "throttling"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
