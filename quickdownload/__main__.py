@@ -62,6 +62,11 @@ def main():
     download_parser.add_argument(
         "--throttle", type=str, help="Bandwidth limit per chunk (e.g., 1M, 500k, 30K)"
     )
+    download_parser.add_argument(
+        "--no-speed-boost",
+        action="store_true",
+        help="Disable aggressive speed optimizations for torrents",
+    )
 
     # Queue management commands
     queue_parser = subparsers.add_parser("queue", help="Manage download queue")
@@ -212,8 +217,17 @@ def main():
                         print("Warning: Streaming mode not supported for torrents")
                     if hasattr(args, "throttle") and args.throttle:
                         print("Warning: Throttling not supported for torrents")
+                    
+                    # Enable high-speed mode by default, disable only if --no-speed-boost is used
+                    high_speed = not getattr(args, "no_speed_boost", False)
+                    if high_speed:
+                        print("Speed boost enabled for faster downloads")
+                    
                     download_torrent(
-                        args.url, args.output, getattr(args, "seed_time", 0)
+                        args.url, 
+                        args.output, 
+                        getattr(args, "seed_time", 0),
+                        high_speed=high_speed
                     )
                 elif args.stream:
                     try:

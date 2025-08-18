@@ -5,7 +5,7 @@ A command-line tool and Python library for downloading files with parallel conne
 resume capabilities, streaming mode, and queue management.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "Nikhil K Singh"
 __email__ = "nsr.nikhilsingh@gmail.com"
 
