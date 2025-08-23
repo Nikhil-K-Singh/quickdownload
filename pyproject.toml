@@ -30,8 +30,8 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "libtorrent",
-    "requests>=2.25.1",
+    "libtorrent==2.0.11",
+    "requests==2.31.0",
 ]
 
 [project.urls]

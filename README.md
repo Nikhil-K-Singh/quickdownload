@@ -10,16 +10,30 @@ A high-performance parallel file downloader that supports both HTTP/HTTPS downlo
 ## Key Features
 
 - **Parallel Downloads**: Split HTTP files into multiple chunks and download simultaneously (up to 24 threads)
-- **Smart Resume**: Intelligent chunk-level resume that survives crashes, network failures, and interruptions
+- **Smart Resume**: Intelligent chunk-level resume t**Q: Does `-p` work the same for torrents and HTTP downloads?**
+A: No, they work differently. For HTTP: `-p` splits files into chunks for parallel downloading. For torrents: `-p` is ignored as libtorrent manages connections automatically with optimized algorithms.
+
+**Q: What about torrent parallelism and speed?**
+A: Torrent performance is controlled by libtorrent's built-in connection management, which is optimized for peer discovery and swarm connectivity. The tool includes 50+ built-in trackers for maximum peer discovery.
+
+**Q: Why is my torrent slow?**
+A: Torrent speed depends on peer availability and seeders. QuickDownload maximizes performance with comprehensive tracker lists, DHT, PEX, and optimized libtorrent settings.
+
+**Q: Can I use throttling with torrents?**
+A: Bandwidth throttling is not supported for torrents as libtorrent manages bandwidth internally. Use `--no-speed-boost` to reduce aggressiveness if needed.
+
+**Q: Can I add custom trackers for private torrents?**
+A: Yes! Use `--trackers` to add private tracker URLs. The built-in public trackers will still be used alongside your custom ones.s crashes, network failures, and interruptions
 - **Download Queue System**: Add multiple downloads to a persistent queue and process them sequentially
 - **Bandwidth Throttling**: Limit download speed per chunk with flexible units (1M, 500K, 2.5MB, etc.)
-- **BitTorrent Support**: Seamless handling of magnet links, .torrent files, and .torrent URLs
+- **Enhanced BitTorrent Support**: Seamless handling of magnet links, .torrent files, and .torrent URLs with 50+ built-in trackers
+- **Comprehensive Tracker Support**: Pre-configured with high-performance public trackers for optimal peer discovery
 - **Real-time Progress**: Individual progress bars for each chunk with live speed monitoring
 - **Robust Error Handling**: Advanced retry logic with exponential backoff and connection recovery
 - **High Performance**: Typically 2-5x faster than `wget`/`curl` for large files
 - **Chunk Verification**: Automatic corruption detection and re-download of damaged chunks
-- **Configurable**: Customizable parallelism, output locations, and seeding options
-- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Configurable**: Customizable parallelism, output locations, seeding options, and custom trackers
+- **Cross-Platform**: Works on Windows, macOS, and Linux with libtorrent 2.x support
 - **Easy Installation**: Available on PyPI with simple `pip install`
 
 ## Performance Comparison
@@ -46,7 +60,7 @@ cd quickdownload
 pip install -e .
 ```
 
-**For BitTorrent support**, install libtorrent if needed:
+**For BitTorrent support**, install libtorrent:
 ```bash
 # macOS with Homebrew
 brew install libtorrent-rasterbar
@@ -55,7 +69,7 @@ brew install libtorrent-rasterbar
 sudo apt-get install python3-libtorrent
 
 # Windows - try pip first, fallback to conda if needed
-pip install libtorrent
+pip install libtorrent==2.0.11
 # If pip fails, use conda (handles C++ dependencies automatically):
 # conda install -c conda-forge libtorrent-python
 ```
@@ -93,15 +107,60 @@ quickdownload queue remove job_123456
 
 **BitTorrent Downloads:**
 ```bash
-# Magnet link
-quickdownload "magnet:?xt=urn:btih:..."
+# Magnet link with comprehensive tracker support (50+ trackers)
+quickdownload  "magnet:?xt=urn:btih:..."
 
 # .torrent file
-quickdownload ubuntu.torrent
+quickdownload  ubuntu.torrent
+
+# .torrent URL
+quickdownload  https://example.com/file.torrent
+
+# With custom additional trackers
+quickdownload  "magnet:?xt=urn:btih:..." --trackers "udp://custom.tracker.com:1337/announce"
+
+# With seeding (contribute back to network for 30 minutes)
+quickdownload  --seed-time 30 ubuntu.torrent
+
+# Custom output directory
+quickdownload  -o ~/Downloads "magnet:?xt=urn:btih:..."
+```
 
 # With seeding (contribute back to the network for 30 minutes)
 quickdownload --seed-time 30 ubuntu.torrent
 ```
+
+## Enhanced BitTorrent Features
+
+QuickDownload includes comprehensive BitTorrent support with significant improvements:
+
+### Built-in Tracker Support
+- **50+ High-Performance Trackers**: Pre-configured with reliable public trackers
+- **Automatic Peer Discovery**: Enhanced DHT, PEX, and tracker integration
+- **Custom Tracker Support**: Add your own trackers for private torrents
+- **Optimized for Speed**: Fast metadata retrieval and peer connections
+
+### Tracker Configuration
+```bash
+# Uses 50+ built-in trackers automatically
+quickdownload  "magnet:?xt=urn:btih:..."
+
+# Add custom trackers for private torrents
+quickdownload  "magnet:?xt=urn:btih:..." --trackers \
+  "udp://private.tracker.com:1337/announce" \
+  "http://another.tracker.com/announce"
+
+# Multiple custom trackers
+quickdownload ubuntu.torrent --trackers \
+  "udp://tracker1.example.com:6969/announce" \
+  "udp://tracker2.example.com:1337/announce"
+```
+
+### libtorrent 2.x Compatibility
+- **Modern libtorrent**: Full support for libtorrent 2.0.11+
+- **Optimized Settings**: Tuned for maximum download performance
+- **Better Error Handling**: Improved connectivity and resume capabilities
+- **Cross-Platform**: Consistent behavior across Windows, macOS, and Linux
 
 ## Why QuickDownload?
 
@@ -122,9 +181,11 @@ Traditional download tools like `wget` and `curl` were designed decades ago. Qui
 | Option | Short | Description | Default | Applies To |
 |--------|-------|-------------|---------|------------|
 | `--output` | `-o` | Custom output filename/directory | Current directory | Both |
-| `--parallel` | `-p` | Number of parallel connections (HTTP: chunks, Torrent: pieces) | 4 | Both |
-| `--throttle` | | Bandwidth limit per chunk/piece (e.g., 1M, 500K, 2.5MB) | No limit | Both |
+| `--parallel` | `-p` | Number of parallel connections (HTTP only, ignored for torrents) | 4 | HTTP only |
+| `--throttle` | | Bandwidth limit per chunk (HTTP only) | No limit | HTTP only |
 | `--seed-time` | | Time to seed after torrent download (minutes) | 0 | Torrent only |
+| `--trackers` | | Additional tracker URLs for torrents | Built-in 50+ trackers | Torrent only |
+| `--no-speed-boost` | | Disable torrent speed optimizations | Speed boost enabled | Torrent only |
 | `--help` | `-h` | Show help message | - | Both |
 
 ### Queue Management Commands
@@ -177,39 +238,36 @@ quickdownload -p 2 https://example.com/file.zip
 
 **Linux Distributions:**
 ```bash
-# Download Ubuntu (magnet link)
-quickdownload "magnet:?xt=urn:btih:..."
+# Download Ubuntu (magnet link with 50+ built-in trackers)
+quickdownload download "magnet:?xt=urn:btih:..."
 
 # Download from .torrent file
-quickdownload ~/Downloads/ubuntu-22.04-desktop-amd64.iso.torrent
+quickdownload download ~/Downloads/ubuntu-22.04-desktop-amd64.iso.torrent
 
 # Download from .torrent URL  
-quickdownload https://releases.ubuntu.com/22.04/ubuntu-22.04-desktop-amd64.iso.torrent
+quickdownload download https://releases.ubuntu.com/22.04/ubuntu-22.04-desktop-amd64.iso.torrent
 ```
 
-**Seeding Support:**
+**Advanced Torrent Options:**
 ```bash
-# Download and seed for 30 minutes
-quickdownload --seed-time 30 "magnet:?xt=urn:btih:..."
+# Custom output directory with seeding
+quickdownload  -o ~/Downloads --seed-time 30 "magnet:?xt=urn:btih:..."
 
-# Download to specific directory with seeding for 30 minutes
-quickdownload -o ~/Downloads --seed-time 30 ubuntu.torrent
+# Private tracker with custom trackers
+quickdownload  "magnet:?xt=urn:btih:..." --trackers \
+  "udp://private.tracker.org:1337/announce" \
+  "http://backup.tracker.org/announce"
+
+# Disable speed optimizations for slow connections
+quickdownload  --no-speed-boost "magnet:?xt=urn:btih:..."
+
+# Combined options
+quickdownload  -o ~/Torrents --seed-time 60 --trackers \
+  "udp://extra.tracker.com:6969/announce" "magnet:?xt=urn:btih:..."
 ```
 
-**Parallelism for Torrents:**
-```bash
-# Conservative parallelism for slow connections or rare torrents
-quickdownload -p 3 "magnet:?xt=urn:btih:..."
-
-# Standard parallelism for most scenarios
-quickdownload -p 6 ubuntu.torrent
-
-# High-performance parallelism for fast connections and popular torrents
-quickdownload -p 12 "magnet:?xt=urn:btih:..."
-
-# Combined with bandwidth throttling
-quickdownload -p 8 --throttle 2M ubuntu.torrent
-```
+**Note on Torrent Parallelism:**
+For torrent downloads, the `-p` flag is ignored as libtorrent manages connections automatically using optimized algorithms. Torrent performance is controlled by built-in libtorrent settings that are tuned for maximum speed and peer connectivity.
 
 ## Queue System
 
@@ -676,7 +734,29 @@ A: Currently, throttling is per-chunk. For total speed control, calculate: `desi
 A: Yes! You can add new jobs with `quickdownload queue add` while the queue is running. New jobs will be processed after current ones complete.
 
 **Q: Why choose QuickDownload over wget/curl?**
-A: QuickDownload offers parallel downloading, intelligent resume, download queue, bandwidth throttling, BitTorrent support, and better progress visualization - all in a modern, robust tool.
+A: QuickDownload offers parallel downloading, intelligent resume, download queue, bandwidth throttling, enhanced BitTorrent support with 50+ trackers, and better progress visualization - all in a modern, robust tool.
+
+## Changelog
+
+### Latest Updates (August 23, 2025)
+
+#### Enhanced BitTorrent Support
+- **ibtorrent 2.0.11 Compatibility**: Full support for modern libtorrent with optimized settings
+- **50+ Built-in Trackers**: Comprehensive list of high-performance public trackers for maximum peer discovery
+- **Faster Metadata Retrieval**: Improved magnet link handling with enhanced tracker integration
+- **Custom Tracker Support**: Add private tracker URLs with `--trackers` option
+- **Optimized Settings**: Tuned libtorrent configuration for maximum download performance
+- **Better Error Handling**: Improved connectivity and compatibility across platforms
+
+#### Command Line Improvements
+- **Clarified `-p` Flag Behavior**: HTTP downloads use parallel chunks, torrents use optimized libtorrent connection management
+- **Torrent-Specific Options**: Added `--trackers` and `--no-speed-boost` flags for torrents
+- **Updated Documentation**: Comprehensive examples and usage patterns for both HTTP and torrent downloads
+
+#### Technical Enhancements
+- **Enhanced Magnet URI Processing**: Automatic tracker injection for better peer connectivity
+- **Session Optimization**: Improved DHT, PEX, and peer discovery settings
+- **Cross-Platform Stability**: Consistent behavior across Windows, macOS, and Linux
 
 ## Troubleshooting
 
@@ -724,5 +804,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [![GitHub](https://img.shields.io/badge/GitHub-Nikhil--K--Singh-blue?logo=github)](https://github.com/Nikhil-K-Singh)
 [![PyPI](https://img.shields.io/badge/PyPI-quickdownload-blue?logo=pypi)](https://pypi.org/project/quickdownload/)
-
-*Star this repo if QuickDownload saves you time!*

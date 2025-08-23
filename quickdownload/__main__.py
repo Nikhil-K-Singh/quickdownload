@@ -67,6 +67,11 @@ def main():
         action="store_true",
         help="Disable aggressive speed optimizations for torrents",
     )
+    download_parser.add_argument(
+        "--trackers",
+        nargs="*",
+        help="Additional tracker URLs for torrent downloads",
+    )
 
     # Queue management commands
     queue_parser = subparsers.add_parser("queue", help="Manage download queue")
@@ -217,17 +222,21 @@ def main():
                         print("Warning: Streaming mode not supported for torrents")
                     if hasattr(args, "throttle") and args.throttle:
                         print("Warning: Throttling not supported for torrents")
-                    
+
                     # Enable high-speed mode by default, disable only if --no-speed-boost is used
                     high_speed = not getattr(args, "no_speed_boost", False)
                     if high_speed:
                         print("Speed boost enabled for faster downloads")
-                    
+
+                    # Get additional trackers if provided
+                    additional_trackers = getattr(args, "trackers", None)
+
                     download_torrent(
-                        args.url, 
-                        args.output, 
+                        args.url,
+                        args.output,
                         getattr(args, "seed_time", 0),
-                        high_speed=high_speed
+                        high_speed=high_speed,
+                        additional_trackers=additional_trackers,
                     )
                 elif args.stream:
                     try:

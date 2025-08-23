@@ -18,6 +18,64 @@ try:
 except ImportError:
     LIBTORRENT_AVAILABLE = False
 
+# Comprehensive list of public trackers for better peer discovery
+DEFAULT_TRACKERS = [
+    # User-provided high-performance trackers
+    "udp://93.158.213.92:1337/announce",
+    "udp://23.168.232.9:1337/announce",
+    "udp://185.243.218.213:80/announce",
+    "http://200.111.152.54:1337/announce",
+    "udp://23.157.120.14:6969/announce",
+    "udp://83.31.31.143:6969/announce",
+    "udp://23.175.184.30:23333/announce",
+    "udp://51.222.82.36:6969/announce",
+    "udp://60.249.37.20:80/announce",
+    "udp://94.136.190.183:6969/announce",
+    "udp://45.154.214.21:6969/announce",
+    "udp://82.67.44.197:9999/announce",
+    "udp://135.125.236.64:6969/announce",
+    "udp://144.126.245.19:6969/announce",
+    "udp://193.233.161.213:6969/announce",
+    "udp://77.91.85.95:6969/announce",
+    "udp://54.36.179.216:6969/announce",
+    "udp://35.227.59.57:6969/announce",
+    "udp://94.136.190.183:2710/announce",
+    "udp://94.136.190.183:1337/announce",
+    "udp://tracker.opentrackr.org:1337/announce",
+    "udp://open.demonii.com:1337/announce",
+    "udp://open.stealth.si:80/announce",
+    "udp://exodus.desync.com:6969/announce",
+    "http://open.tracker.cl:1337/announce",
+    "udp://tracker.theoks.net:6969/announce",
+    "udp://explodie.org:6969/announce",
+    "udp://wepzone.net:6969/announce",
+    "udp://udp.tracker.projectk.org:23333/announce",
+    "udp://ttk2.nbaonlineservice.com:6969/announce",
+    "udp://tracker2.dler.org:80/announce",
+    "udp://tracker.zupix.online:6969/announce",
+    "udp://tracker.yume-hatsuyuki.moe:6969/announce",
+    "udp://tracker.wepzone.net:6969/announce",
+    "udp://tracker.valete.tf:9999/announce",
+    "udp://tracker.tryhackx.org:6969/announce",
+    "udp://tracker.torrust-demo.com:6969/announce",
+    "udp://tracker.therarbg.to:6969/announce",
+    "udp://tracker.srv00.com:6969/announce",
+    "udp://tracker.skillindia.site:6969/announce",
+    # Additional popular public trackers
+    "udp://tracker.torrent.eu.org:451/announce",
+    "udp://tracker.bittor.pw:1337/announce",
+    "udp://public.popcorn-tracker.org:6969/announce",
+    "udp://tracker.dler.org:6969/announce",
+    "udp://opentracker.i2p.rocks:6969/announce",
+    "http://tracker.files.fm:6969/announce",
+    "udp://tracker.internetwarriors.net:1337/announce",
+    "udp://tracker.gbitt.info:80/announce",
+    "udp://tracker.tiny-vps.com:6969/announce",
+    "udp://retracker.lanta-net.ru:2710/announce",
+    "http://tracker.bt4g.com:2095/announce",
+    "udp://bt1.archive.org:6969/announce",
+]
+
 
 def is_torrent_url(url):
     """
@@ -112,7 +170,38 @@ def format_time(seconds):
         return f"{hours:.0f}h {minutes:.0f}m"
 
 
-def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=True):
+def add_trackers_to_magnet(magnet_uri, additional_trackers=None):
+    """
+    Add default and additional trackers to a magnet URI.
+
+    Args:
+        magnet_uri (str): The original magnet URI
+        additional_trackers (list): Additional tracker URLs to add
+
+    Returns:
+        str: Enhanced magnet URI with added trackers
+    """
+    # Combine default trackers with additional ones
+    all_trackers = DEFAULT_TRACKERS.copy()
+    if additional_trackers:
+        all_trackers.extend(additional_trackers)
+
+    # Add tracker parameters to magnet URI
+    enhanced_magnet = magnet_uri
+    for tracker in all_trackers:
+        if f"tr={tracker}" not in enhanced_magnet:
+            enhanced_magnet += f"&tr={tracker}"
+
+    return enhanced_magnet
+
+
+def download_torrent(
+    torrent_input,
+    output_dir=None,
+    seed_time=0,
+    high_speed=True,
+    additional_trackers=None,
+):
     """
     Download a torrent file or magnet link with speed optimizations.
 
@@ -121,6 +210,7 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=Tru
         output_dir (str): Directory to save downloaded files (default: current directory)
         seed_time (int): Time to seed in minutes after download completes (default: 0)
         high_speed (bool): Enable aggressive speed optimizations (default: True)
+        additional_trackers (list): Additional tracker URLs to use (optional)
     """
     check_libtorrent()
 
@@ -134,70 +224,50 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=Tru
     print(f"Output directory: {output_dir}")
     print("=" * 50)
 
-    # Create libtorrent session with aggressive speed optimization settings
+    # Create libtorrent session with speed optimization settings
+    # Compatible with libtorrent 2.0.11
     settings = {
         # Basic settings
         "user_agent": "QuickDownload/1.1",
-        "listen_interfaces": "0.0.0.0:6881,[::]:6881",  # IPv4 + IPv6
-        
+        "listen_interfaces": "0.0.0.0:6881,[::]:6881",
         # Peer discovery and connectivity
         "enable_dht": True,
-        "enable_lsd": True,  # Local Service Discovery
+        "enable_lsd": True,
         "enable_upnp": True,
         "enable_natpmp": True,
         "enable_incoming_utp": True,
         "enable_outgoing_utp": True,
-        
-        # Connection limits (aggressive for speed)
-        "connections_limit": 500,  # Max total connections
-        "connections_limit_factor": 150,  # Connections per torrent factor
-        "half_open_limit": 50,  # Max half-open connections
-        "max_peerlist_size": 4000,  # Larger peer list
-        
-        # Download optimization
-        "max_queued_disk_bytes": 16 * 1024 * 1024,  # 16MB disk queue
-        "cache_size": 512,  # 512 * 16KB = 8MB cache
-        "read_cache_line_size": 64,  # Larger read cache lines
-        "write_cache_line_size": 64,  # Larger write cache lines
-        "cache_buffer_chunk_size": 128,  # Optimize cache chunks
+        # Connection limits (updated for libtorrent 2.x)
+        "connections_limit": 500,
+        "unchoke_slots_limit": 100,  # Replaces connections_limit_factor
+        "max_peerlist_size": 4000,
+        # Download optimization (updated for libtorrent 2.x)
+        "max_queued_disk_bytes": 16 * 1024 * 1024,
         "use_read_cache": True,
         "coalesce_reads": True,
         "coalesce_writes": True,
-        
         # Piece selection and requesting
-        "piece_timeout": 20,  # Faster piece timeout
-        "request_timeout": 15,  # Faster request timeout
-        "max_out_request_queue": 1500,  # More requests in flight
+        "piece_timeout": 20,
+        "request_timeout": 15,
+        "max_out_request_queue": 1500,
         "max_allowed_in_request_queue": 2000,
-        "whole_pieces_threshold": 20,  # Download whole pieces threshold
-        
-        # Bandwidth and choking
-        "choking_algorithm": 2,  # Rate-based choking (fastest)
-        "seed_choking_algorithm": 1,  # Fastest upload choking
-        "mixed_mode_algorithm": 0,  # Prefer downloading peers
-        "upload_rate_limit": 0,  # No upload limit (be generous to get better download)
-        "download_rate_limit": 0,  # No download limit
-        
+        "whole_pieces_threshold": 20,
+        # Bandwidth settings
+        "upload_rate_limit": 0,
+        "download_rate_limit": 0,
         # Advanced optimizations
         "prefer_udp_trackers": True,
-        "strict_super_seeding": False,
         "allow_multiple_connections_per_ip": True,
-        "send_buffer_watermark": 1024 * 1024,  # 1MB send buffer
-        "send_buffer_low_watermark": 512 * 1024,  # 512KB low watermark
-        "send_buffer_watermark_factor": 150,
-        
-        # Tracker and DHT optimization
-        "auto_manage_startup": 60,  # Quick startup
-        "max_failcount": 1,  # Quick failure recovery
+        "send_buffer_watermark": 1024 * 1024,
+        "send_buffer_low_watermark": 512 * 1024,
+        # Tracker optimization
         "tracker_completion_timeout": 20,
         "tracker_receive_timeout": 15,
-        "dht_announce_interval": 900,  # 15 min DHT announces
-        
-        # Encryption (can help with ISP throttling)
-        "out_enc_policy": 1,  # Enable outgoing encryption
-        "in_enc_policy": 1,   # Enable incoming encryption
-        "allowed_enc_level": 2,  # Both plaintext and encrypted
-        "prefer_rc4": True,
+        "dht_announce_interval": 900,
+        # Encryption
+        "out_enc_policy": 1,
+        "in_enc_policy": 1,
+        "allowed_enc_level": 2,
     }
 
     session = lt.session(settings)
@@ -209,29 +279,25 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=Tru
         add_params = {
             "save_path": output_dir,
             "flags": (
-                lt.torrent_flags.auto_managed |
-                lt.torrent_flags.duplicate_is_error |
-                lt.torrent_flags.apply_ip_filter
-            )
+                lt.torrent_flags.auto_managed | lt.torrent_flags.duplicate_is_error
+            ),
         }
-        
+
         # Add speed optimization flags if high_speed mode is enabled
         if high_speed:
-            add_params["flags"] |= (
-                lt.torrent_flags.sequential_download |
-                lt.torrent_flags.super_seeding
-            )
-            # More aggressive settings for this specific torrent
-            add_params.update({
-                "max_connections": 100,  # Max connections for this torrent
-                "max_uploads": 50,       # Max uploads for better ratio
-                "upload_limit": -1,      # No upload limit
-                "download_limit": -1,    # No download limit
-            })
-        
+            add_params["flags"] |= lt.torrent_flags.sequential_download
+            # Note: Connection and upload limits are set differently in libtorrent 2.x
+            # These settings are applied via the session settings instead
+
         if torrent_input.startswith("magnet:"):
             print("Adding magnet link...")
-            handle = lt.add_magnet_uri(session, torrent_input, add_params)
+            # Enhance magnet URI with additional trackers for better peer discovery
+            enhanced_magnet = add_trackers_to_magnet(torrent_input, additional_trackers)
+            tracker_count = len(DEFAULT_TRACKERS) + (
+                len(additional_trackers) if additional_trackers else 0
+            )
+            print(f"Using {tracker_count} trackers for peer discovery...")
+            handle = lt.add_magnet_uri(session, enhanced_magnet, add_params)
         elif torrent_input.startswith("http"):
             print("Downloading and adding .torrent file...")
             temp_torrent_file = download_torrent_file(torrent_input)
@@ -255,7 +321,7 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=Tru
         while not handle.has_metadata():
             if time.time() - start_time > metadata_timeout:
                 raise TimeoutError("Timeout waiting for torrent metadata")
-            
+
             # Create animated dots (max 6 dots, then reset)
             dots_count = (dots_count + 1) % 7
             dots = "." * dots_count + " " * (6 - dots_count)
@@ -267,23 +333,25 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=Tru
         print(f"Torrent name: {handle.name()}")
         print(f"Total size: {format_size(handle.status().total_wanted)}")
         print(f"Files: {handle.get_torrent_info().num_files()}")
-        
+
         # Apply additional speed optimizations after metadata is available
         if high_speed:
             print("Applying speed optimizations...")
             # Force the torrent to be active and start downloading immediately
             handle.resume()
             handle.set_priority(255)  # Highest priority
-            
+
             # Set piece priorities for faster start (prioritize first/last pieces)
             torrent_info = handle.get_torrent_info()
             if torrent_info.num_pieces() > 0:
                 # Prioritize first and last few pieces for faster startup
                 for i in range(min(5, torrent_info.num_pieces())):
                     handle.piece_priority(i, 7)  # Highest piece priority
-                for i in range(max(0, torrent_info.num_pieces() - 5), torrent_info.num_pieces()):
+                for i in range(
+                    max(0, torrent_info.num_pieces() - 5), torrent_info.num_pieces()
+                ):
                     handle.piece_priority(i, 7)  # Highest piece priority
-        
+
         print("=" * 50)
 
         # Download loop
@@ -316,14 +384,17 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=Tru
             # Update immediately if progress changed, but limit to reasonable frequency
             current_time = time.time()
             time_since_last_update = current_time - last_update_time
-            progress_changed = abs(progress - last_progress) >= 0.05  # More sensitive: 0.05%
-            
+            progress_changed = (
+                abs(progress - last_progress) >= 0.05
+            )  # More sensitive: 0.05%
+
             should_update = (
-                progress_changed or  # Any significant progress change
-                time_since_last_update >= 0.8 or  # Force update every 0.8 seconds for live stats
-                last_progress < 0  # First update
+                progress_changed  # Any significant progress change
+                or time_since_last_update
+                >= 0.8  # Force update every 0.8 seconds for live stats
+                or last_progress < 0  # First update
             )
-            
+
             if should_update:
                 # Create progress bar for torrent download
                 bar_length = 30
@@ -338,11 +409,11 @@ def download_torrent(torrent_input, output_dir=None, seed_time=0, high_speed=Tru
                     f"Peers: {num_peers} Seeds: {num_seeds} | "
                     f"ETA: {eta_str}"
                 )
-                
+
                 # Clear line and print (ensure we clear enough space)
                 print(f"\r{' ' * 120}", end="", flush=True)
                 print(f"\r{progress_line}", end="", flush=True)
-                
+
                 last_progress = progress
                 last_update_time = current_time
 
