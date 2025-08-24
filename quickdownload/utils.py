@@ -479,6 +479,30 @@ def _verify_chunk(temp_file, expected_size):
     return False
 
 
+def _calculate_optimal_chunks(file_size, target_chunk_size_mb=5):
+    """
+    Calculate optimal number of chunks based on file size and target chunk size.
+
+    Args:
+        file_size (int): Size of the file in bytes
+        target_chunk_size_mb (int): Target chunk size in MB (default: 5MB)
+
+    Returns:
+        int: Optimal number of chunks (minimum 1, maximum 24)
+    """
+    if file_size <= 0:
+        return 1
+
+    target_chunk_size_bytes = target_chunk_size_mb * 1024 * 1024  # Convert MB to bytes
+    calculated_chunks = max(1, file_size // target_chunk_size_bytes)
+
+    # Cap at reasonable maximum to avoid too many connections
+    max_chunks = 64
+    optimal_chunks = min(calculated_chunks, max_chunks)
+
+    return int(optimal_chunks)
+
+
 def download_file(url, output=None, parallel=4, throttle_limit=None):
     """
     Downloads a file from the specified URL with optional output file name and parallel downloads.
@@ -519,6 +543,13 @@ def download_file(url, output=None, parallel=4, throttle_limit=None):
         file_size, supports_ranges, filename = _get_file_info(url)
         print("✓")
 
+        # Auto-calculate optimal chunks if parallel=0
+        original_parallel = parallel
+        if parallel == 0 and supports_ranges and file_size > 0:
+            parallel = _calculate_optimal_chunks(file_size)
+            chunk_size_mb = file_size / parallel / (1024 * 1024)
+            print(f"Auto-calculated {parallel} chunks (~{chunk_size_mb:.1f} MB each)")
+
         # Determine output filename
         if output is None:
             output = filename
@@ -526,6 +557,10 @@ def download_file(url, output=None, parallel=4, throttle_limit=None):
         print(f"File size: {_format_size(file_size)}")
         print(f"Output file: {output}")
         print(f"Range requests supported: {supports_ranges}")
+        if original_parallel == 0:
+            print(f"Parallel connections: {parallel} (auto-calculated)")
+        else:
+            print(f"Parallel connections: {parallel}")
 
         # Check for existing progress
         existing_progress = _load_progress(output)
@@ -1149,8 +1184,14 @@ def _show_preview_bar():
     print()  # New line after preview
 
 
+# Global variable for progress timing
+_progress_start_time = None
+
+
 def _show_progress(progress, downloaded, total):
     """Display download progress with speed and ETA."""
+    global _progress_start_time
+
     bar_length = 50
     filled_length = int(bar_length * progress / 100)
 
@@ -1161,19 +1202,16 @@ def _show_progress(progress, downloaded, total):
     total_str = _format_size(total)
 
     # Initialize timing data if not present
-    if not hasattr(_show_progress, "start_time"):
-        _show_progress.start_time = time.time()
-        _show_progress.last_time = time.time()
-        _show_progress.last_downloaded = 0
-
     current_time = time.time()
+    if _progress_start_time is None:
+        _progress_start_time = current_time
 
     # Calculate speed and ETA
     speed_str = ""
     eta_str = ""
 
     # Calculate overall average speed
-    total_time = current_time - _show_progress.start_time
+    total_time = current_time - _progress_start_time
     if total_time > 0:
         avg_speed = downloaded / total_time
         if avg_speed > 0:

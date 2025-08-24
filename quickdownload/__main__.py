@@ -40,7 +40,7 @@ def main():
         "--parallel",
         type=int,
         default=4,
-        help="Number of parallel connections (default: 4)",
+        help="Number of parallel connections (default: 4, use 0 for auto-calculation based on 5MB chunks)",
     )
     download_parser.add_argument(
         "--stream",
@@ -88,7 +88,7 @@ def main():
         "--parallel",
         type=int,
         default=4,
-        help="Number of parallel connections (default: 4)",
+        help="Number of parallel connections (default: 4, use 0 for auto-calculation based on 5MB chunks)",
     )
     add_parser.add_argument(
         "--stream", action="store_true", help="Enable streaming mode"
